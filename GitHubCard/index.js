@@ -28,8 +28,6 @@
     user, and adding that card to the DOM.
 */
 
-const followersArray = [];
-
 /*
   STEP 3: Create a function that accepts a single object as its only argument.
     Using DOM methods and properties, create and return the following markup:
@@ -58,3 +56,126 @@ const followersArray = [];
     luishrd
     bigknell
 */
+
+/************** S T A R T **************/
+/***************************************/
+
+/* Error 403/404 Handler */
+axios.interceptors.response.use((response) => {
+  return response;
+}, function (error) {
+  if (error.response.status === 403) {
+      console.log('Loaded the page too many times, chill out ...');
+      auth.logout();
+      router.replace('/TooManyCalls');
+  }
+  if (error.response.status === 404) {
+    console.log('Not Found, Does not Exist ...');
+    auth.logout();
+    router.replace('/DoesNotExist');
+}
+  return Promise.reject(error.response);
+});
+const [cards] = document.getElementsByClassName('cards');
+
+/* This or That
+
+axios.get('https://api.github.com/users/cloudgang')
+  .then(response => {
+    console.log('Card Data: ', response);
+    const uI = response.data;
+    console.log('User Info: ', uI);
+    return axios.get('https://api.github.com/users/cloudgang/followers');
+})
+
+*/ 
+function addGitHubUser(...users) {
+  const url = 'https://api.github.com/users';
+  const promises = users.map(user => axios.get(`${url}/${user}`));
+
+  Promise.all(promises).then(values => {
+          values.forEach(value => {
+            const card = createCard(value.data);
+            cards.append(card);
+          });
+  });
+}
+
+addGitHubUser('cloudgang');
+
+const followersArray = [
+  'tetondan',
+  'dustinmyers',
+  'justsml',
+  'luishrd',
+  'bigknell'
+];
+
+/* This or That 
+
+followersArray.forEach(user => {
+  axios.get(`https://api.github.com/users/${user}`)
+  .then(response => {
+    console.log(response.data);
+    cards.appendChild(createCard(response));
+  })
+})
+
+*/
+
+addGitHubUser(...followersArray);
+
+function createCard(data) {
+
+  const card = document.createElement('div');
+  const img = document.createElement('img');
+  const userInfo = document.createElement('div');
+  const name = document.createElement('h3');
+  const userName = document.createElement('p');
+  const location = document.createElement('p');
+  const profile = document.createElement('p');
+  const profileLink = document.createElement('a');
+  const followers = document.createElement('p');
+  const following = document.createElement('p');
+  const bio = document.createElement('p');
+  
+  card.append(img, userInfo);
+  userInfo.append(name, userName, location, profile, followers, following, bio);
+  profile.append(profileLink);
+
+  card.classList.add('card');
+  img.src = data.avatar_url;
+  userInfo.classList.add('card-info');
+  name.classList.add('name');
+  name.setAttribute('id', "name");
+  name.textContent = data.name;
+  userName.classList.add('username');
+  userName.textContent = data.login;
+  location.textContent = `Location: ${data.location}`;
+  profile.prepend('Profile: ');
+  profileLink.href = data.html_url;
+  profileLink.textContent = data.html_url;
+  followers.textContent = `Followers: ${data.followers}`;
+  following.textContent = `Following: ${data.following}`;
+  bio.textContent = `Bio: ${data.bio}`;
+  
+  var styleyStyles = `
+  .name {
+    color: red;
+  }
+  `
+  var styleSheet = document.createElement("style")
+  styleSheet.type = "text/css"
+  styleSheet.innerText = styleyStyles
+
+  name.append(styleSheet)
+
+  /*
+  var str = document.getElementById("name").innerHTML; 
+  var res = str.replace("Supreme Ciento", "Erik Faison");
+  document.getElementById("name").innerHTML = res;
+ */
+  return card;
+}
+
+
